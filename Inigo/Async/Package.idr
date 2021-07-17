@@ -21,6 +21,10 @@ index =
   map parsePackageIndex (read "packages" "index")
 
 export
+fileExists : String -> Promise Bool
+fileExists path = fs_exists path
+
+export
 readPackage : String -> Promise Package
 readPackage packageFile =
   do

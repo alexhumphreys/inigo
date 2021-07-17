@@ -49,6 +49,15 @@ collect includeDevDeps depTree =
     ) pkgDeps
   ) depTree
 
+packageFilePath : String -> Promise String
+packageFilePath src = do
+  tp <- fileExists $ src </> inigoTomlPath
+  dp <- fileExists $ src </> inigoDhallPath
+  case (tp, dp) of
+       (True, _) => pure inigoTomlPath
+       (False, True) => pure inigoDhallPath
+       (False, False) => reject "Inigo.toml not found"
+
 -- Okay, here's where the fun begins
 -- We're going to grab all sub-dep trees via our new deps endpoint
 -- and then we're going to cull dups and then pass it to semvar sat to try
@@ -69,7 +78,7 @@ fetchDeps server includeDevDeps build pkg =
     Right sat <- lift $ satisfyAll versionNodes allDeps
       | Left err => reject ("Error satisfying contraints: " ++ err)
     log ("Sat: " ++ (show sat))
-    
+
     all $ map pullDep sat
     -- TODO: We should only build things which have changed
     -- TODO: How do we know what's changed?
@@ -87,9 +96,8 @@ fetchDeps server includeDevDeps build pkg =
           do
             pull server packageNS packageName (Just version)
             let src = inigoDepDir </> joinPath pkg
-            pkg <- readPackage $ src </> inigoTomlPath
+            pkg <- readPackage $ !(packageFilePath src)
             pure (src, pkg)
-
 
 ||| Get all elems of the left list not present in the right list
 total
@@ -105,7 +113,7 @@ fetchExtraDeps devDeps build pkg = do
     getSubDirPkg : String -> List (String, Package) -> String -> Promise (List (String, Package))
     getSubDirPkg depDir pkgs subDir = do
         let srcDir = depDir </> subDir
-        pkg <- readPackage $ srcDir </> inigoTomlPath
+        pkg <- readPackage $ !(packageFilePath srcDir)
         if any ((== pkg) . snd) pkgs
             then pure pkgs
             else pure ((srcDir, pkg) :: pkgs)
