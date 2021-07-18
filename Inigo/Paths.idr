@@ -2,13 +2,18 @@ module Inigo.Paths
 
 import public System.Path
 
-export
-inigoTomlPath : String
-inigoTomlPath = "Inigo.toml"
+public export
+data InigoPackagePath
+  = TomlPath String
+  | DhallPath String
 
 export
-inigoDhallPath : String
-inigoDhallPath = "Inigo.dhall"
+inigoTomlPath : InigoPackagePath
+inigoTomlPath = TomlPath "Inigo.toml"
+
+export
+inigoDhallPath : InigoPackagePath
+inigoDhallPath = DhallPath "Inigo.dhall"
 
 export
 inigoIPkgPath : String
