@@ -35,8 +35,8 @@ Show InigoPackagePath where
 export
 packageFilePath : String -> Promise InigoPackagePath
 packageFilePath src =
-  let tomlPath = src </> show inigoTomlPath
-      dhallPath = src </> show inigoDhallPath
+  let tomlPath = src </> inigoTomlPath
+      dhallPath = src </> inigoDhallPath
   in do
     tp <- fs_exists $ tomlPath
     dp <- fs_exists $ dhallPath
