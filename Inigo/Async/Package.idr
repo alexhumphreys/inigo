@@ -22,30 +22,46 @@ index : Promise (Either String PackageIndex)
 index =
   map parsePackageIndex (read "packages" "index")
 
-export
-fileExists : String -> Promise Bool
-fileExists path = fs_exists path
+public export
+data InigoPackagePath
+  = TomlPath String
+  | DhallPath String
 
 export
-readPackage : InigoPackagePath -> Promise Package
-readPackage (TomlPath packageFile) =
-  do
-    contents <- fs_readFile packageFile
-    let Right package = parsePackage contents
-      | Left err => reject ("Error reading package: " ++ err)
-    pure package
-readPackage (DhallPath packageFile) =
-  do
-    -- can pass the file path to dhall so it can handle relative imports
-    Right package <- parsePackageDhall packageFile
-      | Left err => reject ("Error reading dhall package: " ++ err)
-    pure package
+Show InigoPackagePath where
+  show (TomlPath x) = x
+  show (DhallPath x) = x
+
+export
+packageFilePath : String -> Promise InigoPackagePath
+packageFilePath src =
+  let tomlPath = src </> show inigoTomlPath
+      dhallPath = src </> show inigoDhallPath
+  in do
+    tp <- fs_exists $ tomlPath
+    dp <- fs_exists $ dhallPath
+    case (tp, dp) of
+         (True, False) => pure $ TomlPath tomlPath
+         (False, True) => pure $ DhallPath dhallPath
+         (True, True) => reject "Conflict: both Inigo.toml and Inigo.dhall found"
+         (False, False) => reject "Inigo.toml not found"
+
+parseFile : InigoPackagePath -> Promise Package
+parseFile (TomlPath path) = do
+  contents <- fs_readFile path
+  let Right package = parsePackage contents
+    | Left err => reject ("Error reading toml package: " ++ err)
+  pure package
+parseFile (DhallPath path) = do
+  -- can pass the file path to dhall so it can handle relative imports
+  Right package <- parsePackageDhall path
+    | Left err => reject ("Error reading dhall package: " ++ err)
+  pure package
+
+export
+readPackage : String -> Promise Package
+readPackage dir = parseFile !(packageFilePath dir)
 
 export
 currPackage : Promise Package
-currPackage =
-  do
-    contents <- fs_readFile inigoTomlPath
-    let Right package = parsePackage contents
-      | Left err => reject ("Error reading package: " ++ err)
-    pure package
+currPackage = readPackage "." -- current dir

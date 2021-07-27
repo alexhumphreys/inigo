@@ -49,15 +49,6 @@ collect includeDevDeps depTree =
     ) pkgDeps
   ) depTree
 
-packageFilePath : String -> Promise String
-packageFilePath src = do
-  tp <- fileExists $ src </> inigoTomlPath
-  dp <- fileExists $ src </> inigoDhallPath
-  case (tp, dp) of
-       (True, _) => pure inigoTomlPath
-       (False, True) => pure inigoDhallPath
-       (False, False) => reject "Inigo.toml not found"
-
 -- Okay, here's where the fun begins
 -- We're going to grab all sub-dep trees via our new deps endpoint
 -- and then we're going to cull dups and then pass it to semvar sat to try
@@ -96,7 +87,7 @@ fetchDeps server includeDevDeps build pkg =
           do
             pull server packageNS packageName (Just version)
             let src = inigoDepDir </> joinPath pkg
-            pkg <- readPackage $ !(packageFilePath src)
+            pkg <- readPackage $ src
             pure (src, pkg)
 
 ||| Get all elems of the left list not present in the right list
@@ -113,7 +104,7 @@ fetchExtraDeps devDeps build pkg = do
     getSubDirPkg : String -> List (String, Package) -> String -> Promise (List (String, Package))
     getSubDirPkg depDir pkgs subDir = do
         let srcDir = depDir </> subDir
-        pkg <- readPackage $ !(packageFilePath srcDir)
+        pkg <- readPackage $ srcDir
         if any ((== pkg) . snd) pkgs
             then pure pkgs
             else pure ((srcDir, pkg) :: pkgs)
@@ -125,9 +116,9 @@ fetchExtraDeps devDeps build pkg = do
     genIPkg : String -> String -> Promise Package
     genIPkg dest subDir = do
         let buildDir = joinPath (".." <$ splitPath (dest </> subDir)) </> "build"
-        let toml = dest </> subDir </> inigoTomlPath
+        let pkgdir = dest </> subDir
         let iPkgFile = dest </> subDir </> inigoIPkgPath
-        pkg <- readPackage toml
+        pkg <- readPackage $ pkgdir
         fs_writeFile iPkgFile $ generateIPkg False (Just buildDir) pkg
         pure pkg
 
