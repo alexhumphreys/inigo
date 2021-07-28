@@ -38,6 +38,8 @@ packageFilePath src =
   let tomlPath = src </> inigoTomlPath
       dhallPath = src </> inigoDhallPath
   in do
+    log (tomlPath)
+    log (dhallPath)
     tp <- fs_exists $ tomlPath
     dp <- fs_exists $ dhallPath
     case (tp, dp) of

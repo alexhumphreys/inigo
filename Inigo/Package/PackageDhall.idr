@@ -17,6 +17,8 @@ import System.Path
 import Toml
 
 import Idrall.API.V2
+import Idrall.Parser
+import Idrall.APIv1
 
 import Language.Reflection
 %language ElabReflection
@@ -38,7 +40,7 @@ record PackageDhall where
   constructor MkPackageDhall
   ns : String
   package : String
-  version : String -- TODO needs converting
+  version : String
   description : Maybe String
   link : Maybe String
   readme : Maybe String
@@ -48,16 +50,20 @@ record PackageDhall where
   sourcedir : String
   main : Maybe String
   executable : Maybe String
-  deps : List (DepPackage) -- TODO needs converting
-  devDeps : List (DepPackage) -- TODO needs converting
+  deps : List (DepPackage)
+  devDeps : List (DepPackage)
   -- extraDeps : List ExtraDep TODO
 
 %runElab (deriveFromDhall Record `{ PackageDhall })
 
 parsePackageDhall' : String -> IO $ Either String PackageDhall
 parsePackageDhall' path = do
-  Right package <- liftIOEither $ deriveFromDhallString {ty=PackageDhall} "./package.dhall"
-    | Left err => pure $ Left $ show err
+  putStrLn $ show $ parseExpr "True"
+  putStrLn "True"
+  Right package <- liftIOEither $ deriveFromDhallString {ty=PackageDhall} "True"
+    | Left err => do
+        putStrLn "HERE"
+        pure $ Left $ show err
   pure $ Right package
 
 requirementFromDhall : String -> Either String Requirement
