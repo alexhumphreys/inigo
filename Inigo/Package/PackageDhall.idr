@@ -48,11 +48,14 @@ record PackageDhall' where
   deps : List (DepPackage)
 %runElab (deriveFromDhall Record `{ PackageDhall' })
 
+shortDepPackage : String
+shortDepPackage = "{ package : { name : Text, ns : Text }, requirement : Text }"
+
 Show PackageDhall' where
   show (MkPackageDhall' depends deps) =
     """
-    { depends = \{show depends}
-    , deps = \{show deps}
+    { depends = \{show depends} : List Text
+    , deps = \{show deps} : List \{ shortDepPackage }
     }
     """
 
@@ -86,7 +89,11 @@ doit x = do
 parsePackageDhall' : String -> IO $ Either String PackageDhall
 parsePackageDhall' path = do
   putStrLn $ show $ parseExpr path
-  putStrLn path
+  Right package' <- liftIOEither $ deriveFromDhallString {ty=PackageDhall'} "./package.dhall"
+    | Left err => do
+        putStrLn "OTHER"
+        pure $ Left $ show err
+  putStrLn $ show package'
   Right package <- liftIOEither $ deriveFromDhallString {ty=PackageDhall} path
     | Left err => do
         putStrLn "HERE"
