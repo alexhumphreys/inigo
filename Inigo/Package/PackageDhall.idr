@@ -29,38 +29,65 @@ record PackageInfo where
   name : String
 %runElab (deriveFromDhall Record `{ PackageInfo })
 
+Show PackageInfo where
+  show (MkPackageInfo ns name) = "{ ns = \{show ns}, name = \{show name} }"
+
 record DepPackage where
   constructor MkDepPackage
   package : PackageInfo
   requirement : String
 %runElab (deriveFromDhall Record `{ DepPackage })
 
+Show DepPackage where
+  show (MkDepPackage package requirement) = "{ package = \{show package}, requirement = \{show requirement} }"
+
+public export
+record PackageDhall' where
+  constructor MkPackageDhall'
+  depends : List String
+  deps : List (DepPackage)
+%runElab (deriveFromDhall Record `{ PackageDhall' })
+
+Show PackageDhall' where
+  show (MkPackageDhall' depends deps) =
+    """
+    { depends = \{show depends}
+    , deps = \{show deps}
+    }
+    """
+
 public export
 record PackageDhall where
   constructor MkPackageDhall
+  depends : List String
+  -- deps : List (DepPackage)
+  description : Maybe String
+  -- devDeps : List (DepPackage)
+  executable : Maybe String
+  license : Maybe String
+  link : Maybe String
+  main : Maybe String
+  modules : List String
   ns : String
   package : String
-  version : String
-  description : Maybe String
-  link : Maybe String
   readme : Maybe String
-  modules : List String
-  depends : List String
-  license : Maybe String
   sourcedir : String
-  main : Maybe String
-  executable : Maybe String
-  deps : List (DepPackage)
-  devDeps : List (DepPackage)
+  version : String
   -- extraDeps : List ExtraDep TODO
 
 %runElab (deriveFromDhall Record `{ PackageDhall })
 
+doit : String -> IO String
+doit x = do
+  x <- liftIOEither $ deriveFromDhallString {ty=PackageDhall'} x
+  putStrLn $ show x
+  pure $ show x
+
 parsePackageDhall' : String -> IO $ Either String PackageDhall
 parsePackageDhall' path = do
-  putStrLn $ show $ parseExpr "True"
-  putStrLn "True"
-  Right package <- liftIOEither $ deriveFromDhallString {ty=PackageDhall} "True"
+  putStrLn $ show $ parseExpr path
+  putStrLn path
+  Right package <- liftIOEither $ deriveFromDhallString {ty=PackageDhall} path
     | Left err => do
         putStrLn "HERE"
         pure $ Left $ show err
@@ -83,11 +110,13 @@ depFromDhall (MkDepPackage (MkPackageInfo ns name) requirement) =
   pure ([ns, name], !(requirementFromDhall requirement))
 
 inigoPackageFromDhall : PackageDhall -> Either String Package
-inigoPackageFromDhall (MkPackageDhall ns package version description link readme modules depends license sourcedir main executable deps devDeps) =
+-- inigoPackageFromDhall (MkPackageDhall ns package version description link readme modules depends license sourcedir main executable deps devDeps) =
+inigoPackageFromDhall (MkPackageDhall depends description executable link license main modules ns package readme sourcedir version) =
   let packageVersion = !(versionFromDhall version)
-      packageDeps = !(traverse depFromDhall deps)
-      packageDevDeps = !(traverse depFromDhall devDeps) in
-  pure $ MkPackage ns package packageVersion description link readme modules depends license sourcedir main executable packageDeps packageDevDeps [] -- TODO add extra deps
+      -- packageDeps = !(traverse depFromDhall deps)
+      -- packageDevDeps = !(traverse depFromDhall devDeps)
+      in
+      pure $ MkPackage ns package packageVersion description link readme modules depends license sourcedir main executable [] [] [] -- TODO add extra deps
 
 export
 parsePackageDhall : String -> Promise $ Either String Package
