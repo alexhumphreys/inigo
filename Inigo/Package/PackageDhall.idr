@@ -50,13 +50,20 @@ record PackageDhall' where
   devDeps : List (DepPackage)
   executable : Maybe String
   license : Maybe String
+  main : Maybe String
+  modules : List String
+  ns : String
+  package : String
+  readme : Maybe String
+  sourcedir : String
+  version : String
 %runElab (deriveFromDhall Record `{ PackageDhall' })
 
 shortDepPackage : String
 shortDepPackage = "{ package : { name : Text, ns : Text }, requirement : Text }"
 
 Show PackageDhall' where
-  show (MkPackageDhall' depends deps description devDeps executable license) =
+  show (MkPackageDhall' {depends, deps, description, devDeps, executable, license, main, modules, ns, package, readme, sourcedir, version}) =
     """
     { depends = \{show depends} : List Text
     , deps = \{show deps} : List \{ shortDepPackage }
@@ -64,6 +71,13 @@ Show PackageDhall' where
     , devDeps = \{show devDeps}
     , executable = \{show executable}
     , license = \{show license}
+    , main = \{show main}
+    , modules = \{show modules}
+    , ns = \{show ns}
+    , package = \{show package}
+    , readme = \{show readme}
+    , sourcedir = \{show sourcedir}
+    , version = \{show version}
     }
     """
 

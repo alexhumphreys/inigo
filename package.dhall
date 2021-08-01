@@ -4,5 +4,12 @@
 , devDeps = [{ package = { ns = "Other" , name = "SomeDebug" }, requirement = "1.0.1" }]
 , executable = Some "MyPkg"
 , license = Some "stuff"
+, main = None
+, modules = [] : List Text
+, ns = "Alexhumphreys"
+, package = "MyPkg"
+, readme = Some "./README.md"
+, sourcedir = "."
+, version = "9.0.0"
 }
 
