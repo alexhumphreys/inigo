@@ -46,16 +46,24 @@ record PackageDhall' where
   constructor MkPackageDhall'
   depends : List String
   deps : List (DepPackage)
+  description : Maybe String
+  devDeps : List (DepPackage)
+  executable : Maybe String
+  license : Maybe String
 %runElab (deriveFromDhall Record `{ PackageDhall' })
 
 shortDepPackage : String
 shortDepPackage = "{ package : { name : Text, ns : Text }, requirement : Text }"
 
 Show PackageDhall' where
-  show (MkPackageDhall' depends deps) =
+  show (MkPackageDhall' depends deps description devDeps executable license) =
     """
     { depends = \{show depends} : List Text
     , deps = \{show deps} : List \{ shortDepPackage }
+    , description = \{show description}
+    , devDeps = \{show devDeps}
+    , executable = \{show executable}
+    , license = \{show license}
     }
     """
 
