@@ -11,5 +11,11 @@
 , readme = Some "./README.md"
 , sourcedir = "."
 , version = "9.0.0"
+, extraDeps =
+  [ { download = < SubDir | Git : Text >.Git "abc2345"
+    , url = "git@github.com/mydep/foo"
+    , subDirs = ["."]
+    }
+  ]
 }
 

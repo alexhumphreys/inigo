@@ -23,6 +23,34 @@ import Idrall.APIv1
 import Language.Reflection
 %language ElabReflection
 
+data Download'
+  = Git' String
+  | SubDir'
+%runElab (deriveFromDhall ADT `{ Download' })
+
+downloadDhallType : String
+downloadDhallType = "< SubDir | Git Text >"
+
+Show Download' where
+  show (Git' x) = "\{downloadDhallType}.Git \{show x}"
+  show SubDir' = "\{downloadDhallType}.SubDir"
+
+record ExtraDep' where
+  constructor MkExtraDep'
+  -- download : Download'
+  url : String
+  subDirs : List String
+%runElab (deriveFromDhall Record `{ ExtraDep' })
+
+Show ExtraDep' where
+  show (MkExtraDep' {url, subDirs}) =
+    """
+    { download = {show download}
+    , url = \{show url}
+    , subDirs = \{show subDirs}
+    }
+    """
+
 record PackageInfo where
   constructor MkPackageInfo
   ns : String
@@ -57,13 +85,14 @@ record PackageDhall' where
   readme : Maybe String
   sourcedir : String
   version : String
+  extraDeps : List ExtraDep'
 %runElab (deriveFromDhall Record `{ PackageDhall' })
 
 shortDepPackage : String
 shortDepPackage = "{ package : { name : Text, ns : Text }, requirement : Text }"
 
 Show PackageDhall' where
-  show (MkPackageDhall' {depends, deps, description, devDeps, executable, license, main, modules, ns, package, readme, sourcedir, version}) =
+  show (MkPackageDhall' {depends, deps, description, devDeps, executable, license, main, modules, ns, package, readme, sourcedir, version, extraDeps}) =
     """
     { depends = \{show depends} : List Text
     , deps = \{show deps} : List \{ shortDepPackage }
@@ -78,6 +107,8 @@ Show PackageDhall' where
     , readme = \{show readme}
     , sourcedir = \{show sourcedir}
     , version = \{show version}
+    , extraDeps =
+      \{show extraDeps}
     }
     """
 
@@ -133,6 +164,10 @@ versionFromDhall x =
   case parseVersion x of
        Nothing => Left "Error parsing Version"
        (Just v) => pure v
+
+extradepFromDhall : ExtraDep' -> ExtraDep
+extradepFromDhall (MkExtraDep' url subDirs) =
+  MkExtraDep SubDir () url subDirs
 
 depFromDhall : DepPackage -> Either String (List String, Requirement)
 depFromDhall (MkDepPackage (MkPackageInfo ns name) requirement) =
