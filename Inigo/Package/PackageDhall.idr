@@ -24,28 +24,28 @@ import Language.Reflection
 %language ElabReflection
 
 data Download'
-  = Git' String
-  | SubDir'
+  = Git_ String
+  | SubDir_
 %runElab (deriveFromDhall ADT `{ Download' })
 
 downloadDhallType : String
-downloadDhallType = "< SubDir | Git Text >"
+downloadDhallType = "< SubDir_ | Git_ Text >"
 
 Show Download' where
-  show (Git' x) = "\{downloadDhallType}.Git \{show x}"
-  show SubDir' = "\{downloadDhallType}.SubDir"
+  show (Git_ x) = "\{downloadDhallType}.Git_ \{show x}"
+  show SubDir_ = "\{downloadDhallType}.SubDir"
 
 record ExtraDep' where
   constructor MkExtraDep'
-  -- download : Download'
+  download : Download'
   url : String
   subDirs : List String
 %runElab (deriveFromDhall Record `{ ExtraDep' })
 
 Show ExtraDep' where
-  show (MkExtraDep' {url, subDirs}) =
+  show (MkExtraDep' {download, url, subDirs}) =
     """
-    { download = {show download}
+    { download = \{show download}
     , url = \{show url}
     , subDirs = \{show subDirs}
     }
@@ -133,6 +133,12 @@ record PackageDhall where
 
 %runElab (deriveFromDhall Record `{ PackageDhall })
 
+doitd : String -> IO String
+doitd x = do
+  x <- liftIOEither $ deriveFromDhallString {ty=Download'} x
+  putStrLn $ show x
+  pure $ show x
+
 doit : String -> IO String
 doit x = do
   x <- liftIOEither $ deriveFromDhallString {ty=PackageDhall'} x
@@ -166,8 +172,6 @@ versionFromDhall x =
        (Just v) => pure v
 
 extradepFromDhall : ExtraDep' -> ExtraDep
-extradepFromDhall (MkExtraDep' url subDirs) =
-  MkExtraDep SubDir () url subDirs
 
 depFromDhall : DepPackage -> Either String (List String, Requirement)
 depFromDhall (MkDepPackage (MkPackageInfo ns name) requirement) =

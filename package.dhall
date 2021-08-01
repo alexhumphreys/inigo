@@ -12,7 +12,7 @@
 , sourcedir = "."
 , version = "9.0.0"
 , extraDeps =
-  [ { download = < SubDir | Git : Text >.Git "abc2345"
+  [ { download = < SubDir_ | Git_ : Text >.Git_ "abc2345"
     , url = "git@github.com/mydep/foo"
     , subDirs = ["."]
     }
