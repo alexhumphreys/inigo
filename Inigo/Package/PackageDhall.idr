@@ -78,6 +78,7 @@ record PackageDhall' where
   devDeps : List (DepPackage)
   executable : Maybe String
   license : Maybe String
+  link : Maybe String
   main : Maybe String
   modules : List String
   ns : String
@@ -92,7 +93,7 @@ shortDepPackage : String
 shortDepPackage = "{ package : { name : Text, ns : Text }, requirement : Text }"
 
 Show PackageDhall' where
-  show (MkPackageDhall' {depends, deps, description, devDeps, executable, license, main, modules, ns, package, readme, sourcedir, version, extraDeps}) =
+  show (MkPackageDhall' {depends, deps, description, devDeps, executable, license, link, main, modules, ns, package, readme, sourcedir, version, extraDeps}) =
     """
     { depends = \{show depends} : List Text
     , deps = \{show deps} : List \{ shortDepPackage }
@@ -100,6 +101,7 @@ Show PackageDhall' where
     , devDeps = \{show devDeps}
     , executable = \{show executable}
     , license = \{show license}
+    , link = \{show link}
     , main = \{show main}
     , modules = \{show modules}
     , ns = \{show ns}
@@ -112,6 +114,7 @@ Show PackageDhall' where
     }
     """
 
+{-
 public export
 record PackageDhall where
   constructor MkPackageDhall
@@ -132,6 +135,7 @@ record PackageDhall where
   -- extraDeps : List ExtraDep TODO
 
 %runElab (deriveFromDhall Record `{ PackageDhall })
+-}
 
 doitd : String -> IO String
 doitd x = do
@@ -145,18 +149,14 @@ doit x = do
   putStrLn $ show x
   pure $ show x
 
-parsePackageDhall' : String -> IO $ Either String PackageDhall
+parsePackageDhall' : String -> IO $ Either String PackageDhall'
 parsePackageDhall' path = do
   putStrLn $ show $ parseExpr path
-  Right package' <- liftIOEither $ deriveFromDhallString {ty=PackageDhall'} "./package.dhall"
+  Right package <- liftIOEither $ deriveFromDhallString {ty=PackageDhall'} path
     | Left err => do
         putStrLn "OTHER"
         pure $ Left $ show err
-  putStrLn $ show package'
-  Right package <- liftIOEither $ deriveFromDhallString {ty=PackageDhall} path
-    | Left err => do
-        putStrLn "HERE"
-        pure $ Left $ show err
+  putStrLn $ show package
   pure $ Right package
 
 requirementFromDhall : String -> Either String Requirement
@@ -172,22 +172,56 @@ versionFromDhall x =
        (Just v) => pure v
 
 extradepFromDhall : ExtraDep' -> ExtraDep
+extradepFromDhall (MkExtraDep' (Git_ x) url subDirs) =
+  MkExtraDep Git x url subDirs
+extradepFromDhall (MkExtraDep' SubDir_ url subDirs) =
+  MkExtraDep SubDir () url subDirs
 
 depFromDhall : DepPackage -> Either String (List String, Requirement)
 depFromDhall (MkDepPackage (MkPackageInfo ns name) requirement) =
   pure ([ns, name], !(requirementFromDhall requirement))
 
-inigoPackageFromDhall : PackageDhall -> Either String Package
--- inigoPackageFromDhall (MkPackageDhall ns package version description link readme modules depends license sourcedir main executable deps devDeps) =
-inigoPackageFromDhall (MkPackageDhall depends description executable link license main modules ns package readme sourcedir version) =
+inigoPackageFromDhall : PackageDhall' -> Either String Package
+inigoPackageFromDhall (MkPackageDhall' {depends, deps, description, devDeps, executable, license, link, main, modules, ns, package, readme, sourcedir, version, extraDeps}) =
   let packageVersion = !(versionFromDhall version)
-      -- packageDeps = !(traverse depFromDhall deps)
-      -- packageDevDeps = !(traverse depFromDhall devDeps)
-      in
-      pure $ MkPackage ns package packageVersion description link readme modules depends license sourcedir main executable [] [] [] -- TODO add extra deps
+      packageDeps = !(traverse depFromDhall deps)
+      packageDevDeps = !(traverse depFromDhall devDeps)
+      packageExtraDeps = map extradepFromDhall extraDeps
+  in
+  pure $ MkPackage
+    { ns=ns
+    , package=package
+    , version=packageVersion
+    , description=description
+    , link=link
+    , readme=readme
+    , modules=modules
+    , depends=depends
+    , license=license
+    , sourcedir=sourcedir
+    , main=main
+    , executable=executable
+    , deps=packageDeps
+    , devDeps=packageDevDeps
+    , extraDeps=packageExtraDeps
+    }
 
 export
 parsePackageDhall : String -> Promise $ Either String Package
 parsePackageDhall x = do
   Right package <- liftIO $ parsePackageDhall' x | Left err => pure $ Left err
   pure $ inigoPackageFromDhall package
+
+doitp : String -> IO ()
+doitp x = do
+    Right package <- liftIO $ parsePackageDhall x
+      | Left err => putStrLn $ show err
+    putStrLn $ show package
+
+{-
+export
+parsePackageDhall : String -> Promise $ Either String Package
+parsePackageDhall x = do
+  Right package <- liftIO $ parsePackageDhall' x | Left err => pure $ Left err
+  pure $ inigoPackageFromDhall package
+  -}

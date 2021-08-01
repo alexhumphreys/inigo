@@ -4,6 +4,7 @@
 , devDeps = [{ package = { ns = "Other" , name = "SomeDebug" }, requirement = "1.0.1" }]
 , executable = Some "MyPkg"
 , license = Some "stuff"
+, link = Some "www.example.com"
 , main = None
 , modules = [] : List Text
 , ns = "Alexhumphreys"
