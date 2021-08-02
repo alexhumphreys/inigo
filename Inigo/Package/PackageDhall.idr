@@ -212,12 +212,6 @@ parsePackageDhall x = do
   Right package <- liftIO $ parsePackageDhall' x | Left err => pure $ Left err
   pure $ inigoPackageFromDhall package
 
-doitp : String -> IO ()
-doitp x = do
-    Right package <- liftIO $ parsePackageDhall x
-      | Left err => putStrLn $ show err
-    putStrLn $ show package
-
 {-
 export
 parsePackageDhall : String -> Promise $ Either String Package
