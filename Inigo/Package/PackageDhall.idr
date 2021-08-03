@@ -114,49 +114,11 @@ Show PackageDhall' where
     }
     """
 
-{-
-public export
-record PackageDhall where
-  constructor MkPackageDhall
-  depends : List String
-  -- deps : List (DepPackage)
-  description : Maybe String
-  -- devDeps : List (DepPackage)
-  executable : Maybe String
-  license : Maybe String
-  link : Maybe String
-  main : Maybe String
-  modules : List String
-  ns : String
-  package : String
-  readme : Maybe String
-  sourcedir : String
-  version : String
-  -- extraDeps : List ExtraDep TODO
-
-%runElab (deriveFromDhall Record `{ PackageDhall })
--}
-
-doitd : String -> IO String
-doitd x = do
-  x <- liftIOEither $ deriveFromDhallString {ty=Download'} x
-  putStrLn $ show x
-  pure $ show x
-
-doit : String -> IO String
-doit x = do
-  x <- liftIOEither $ deriveFromDhallString {ty=PackageDhall'} x
-  putStrLn $ show x
-  pure $ show x
-
 parsePackageDhall' : String -> IO $ Either String PackageDhall'
 parsePackageDhall' path = do
-  putStrLn $ show $ parseExpr path
   Right package <- liftIOEither $ deriveFromDhallString {ty=PackageDhall'} path
     | Left err => do
-        putStrLn "OTHER"
         pure $ Left $ show err
-  putStrLn $ show package
   pure $ Right package
 
 requirementFromDhall : String -> Either String Requirement
@@ -211,11 +173,3 @@ parsePackageDhall : String -> Promise $ Either String Package
 parsePackageDhall x = do
   Right package <- liftIO $ parsePackageDhall' x | Left err => pure $ Left err
   pure $ inigoPackageFromDhall package
-
-{-
-export
-parsePackageDhall : String -> Promise $ Either String Package
-parsePackageDhall x = do
-  Right package <- liftIO $ parsePackageDhall' x | Left err => pure $ Left err
-  pure $ inigoPackageFromDhall package
-  -}
