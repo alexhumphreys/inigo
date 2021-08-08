@@ -34,17 +34,9 @@ Show GitDep where
   show (MkGitDep commit url subDirs) =
     "MkGitDep \{show commit} \{show url} \{show subDirs}"
 
-data Download'
-  = Git String
-  | SubDir
-%runElab (deriveFromDhall ADT `{ Download' })
-
-downloadDhallType : String
-downloadDhallType = "< SubDir | Git Text >"
-
-Show Download' where
-  show (Git x) = "\{downloadDhallType}.Git \{show x}"
-  show SubDir = "\{downloadDhallType}.SubDir"
+gitDepDhallType : String
+gitDepDhallType =
+  "{ commit : Text, url : Text, subDirs : List Text }"
 
 record DepPackage where
   constructor MkDepPackage
@@ -54,7 +46,8 @@ record DepPackage where
 %runElab (deriveFromDhall Record `{ DepPackage })
 
 Show DepPackage where
-  show (MkDepPackage ns name requirement) = "{ ns = \{show ns}, name = \{show name}, requirement = \{show requirement} }"
+  show (MkDepPackage ns name requirement) =
+    "{ ns = \{show ns}, name = \{show name}, requirement = \{show requirement} }"
 
 public export
 record PackageDhall' where
@@ -77,14 +70,14 @@ record PackageDhall' where
   gitDeps : List GitDep
 %runElab (deriveFromDhall Record `{ PackageDhall' })
 
-shortDepPackage : String
-shortDepPackage = "{ package : { name : Text, ns : Text }, requirement : Text }"
+depPackageDhallType : String
+depPackageDhallType = "{ name : Text, ns : Text, requirement : Text }"
 
 Show PackageDhall' where
   show (MkPackageDhall' {depends, deps, description, devDeps, executable, license, link, main, modules, ns, package, readme, sourcedir, version, localDeps, gitDeps}) =
     """
     { depends = \{show depends} : List Text
-    , deps = \{show deps} : List \{ shortDepPackage }
+    , deps = \{show deps} : List \{ depPackageDhallType }
     , description = \{show description}
     , devDeps = \{show devDeps}
     , executable = \{show executable}
@@ -111,26 +104,6 @@ parsePackageDhall' path = do
         pure $ Left $ show err
   pure $ Right package
 
-requirementFromDhall : String -> Either String Requirement
-requirementFromDhall x =
-  case parseRequirement x of
-       Nothing => Left "Error parsing Requirement"
-       (Just r) => pure r
-
-versionFromDhall : String -> Either String Version
-versionFromDhall x =
-  case parseVersion x of
-       Nothing => Left "Error parsing Version"
-       (Just v) => pure v
-
-extraDepFromGit : GitDep -> ExtraDep
-extraDepFromGit (MkGitDep commit url subDirs) =
-  MkExtraDep Git commit url subDirs
-
-depFromDhall : DepPackage -> Either String (List String, Requirement)
-depFromDhall (MkDepPackage ns name requirement) =
-  pure ([ns, name], !(requirementFromDhall requirement))
-
 inigoPackageFromDhall : PackageDhall' -> Either String Package
 inigoPackageFromDhall (MkPackageDhall' {depends, deps, description, devDeps, executable, license, link, main, modules, ns, package, readme, sourcedir, version, localDeps, gitDeps}) =
   let packageVersion = !(versionFromDhall version)
@@ -156,6 +129,23 @@ inigoPackageFromDhall (MkPackageDhall' {depends, deps, description, devDeps, exe
     , devDeps=packageDevDeps
     , extraDeps=packageExtraDepsFromLocal :: packageExtraDepsFromGit
     }
+  where
+    requirementFromDhall : String -> Either String Requirement
+    requirementFromDhall x =
+      case parseRequirement x of
+           Nothing => Left "Error parsing Requirement"
+           (Just r) => pure r
+    versionFromDhall : String -> Either String Version
+    versionFromDhall x =
+      case parseVersion x of
+           Nothing => Left "Error parsing Version"
+           (Just v) => pure v
+    extraDepFromGit : GitDep -> ExtraDep
+    extraDepFromGit (MkGitDep commit url subDirs) =
+      MkExtraDep Git commit url subDirs
+    depFromDhall : DepPackage -> Either String (List String, Requirement)
+    depFromDhall (MkDepPackage ns name requirement) =
+      pure ([ns, name], !(requirementFromDhall requirement))
 
 export
 parsePackageDhall : String -> Promise $ Either String Package
