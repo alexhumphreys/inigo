@@ -22,19 +22,18 @@ markdownTokenMap = toTokenMap $
   , (imageSym, ImageSym)
   , (link, MdLink)
   , (htmlCloseTag, HtmlCloseTag)
-  , (htmlOpenTag, HtmlOpenTag)
-  , (newLine, NewLine)
+  --, (htmlOpenTag, HtmlOpenTag)
+  -- (newLine, NewLine)
   , (text, MdText)
   ]
 
-||| Combine consecutive `MdText` nodes into one
 combineText : List $ WithBounds MarkdownToken -> List $ WithBounds MarkdownToken
 combineText [] = []
 combineText (el :: rest) =
   let
     init = (List1.singleton el, el)
   in
-    forget $ reverse $ fst $ (foldl accumulate init rest)
+    forget $ reverse $ fst $ (foldl accumulate ?oo rest)
   where
     accumulate : (List1 $ WithBounds MarkdownToken, WithBounds MarkdownToken) -> WithBounds MarkdownToken -> (List1 $ WithBounds MarkdownToken, WithBounds MarkdownToken)
     accumulate (acc0 ::: acc1, last) el =

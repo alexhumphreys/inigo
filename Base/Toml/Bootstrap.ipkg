@@ -1,7 +1,7 @@
 package Toml
 
 modules = Toml
-depends = contrib, idris2
+depends = contrib, idris2, Extra
 
 sourcedir = ""
 

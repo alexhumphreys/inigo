@@ -4,7 +4,7 @@ all : inigo
 .PHONY : bootstrap server inigo install static local-server deploy-init deploy test clean distclean
 
 define build_base_dep
-	(cd Base/$(1) && idris2 --build Bootstrap.ipkg --build-dir ../../build)
+	(cd Base/$(1) && idris2 --build Bootstrap.ipkg --build-dir ../../build && idris2 --install Bootstrap.ipkg)
 endef
 
 bootstrap :
@@ -12,7 +12,7 @@ bootstrap :
 	$(call build_base_dep,Color)
 	$(call build_base_dep,Extra)
 	$(call build_base_dep,Fmt)
-	$(call build_base_dep,IdrTest)
+	# $(call build_base_dep,IdrTest)
 	$(call build_base_dep,Markdown)
 	$(call build_base_dep,SemVar)
 	$(call build_base_dep,Toml)
