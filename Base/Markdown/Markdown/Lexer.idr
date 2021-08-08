@@ -4,6 +4,7 @@ import Data.List1
 
 import Text.Lexer
 import Text.Token
+import Text.Bounded
 
 import Markdown.String
 import public Markdown.Tokens
@@ -27,7 +28,7 @@ markdownTokenMap = toTokenMap $
   ]
 
 ||| Combine consecutive `MdText` nodes into one
-combineText : List MarkdownToken -> List MarkdownToken
+combineText : List $ MarkdownToken -> List $ MarkdownToken
 combineText [] = []
 combineText (el :: rest) =
   let
@@ -47,8 +48,8 @@ combineText (el :: rest) =
           (el ::: acc0 :: acc1, el)
 
 public export
-lexMarkdown : String -> Maybe (List MarkdownToken)
+lexMarkdown : String -> Maybe (List $ WithBounds MarkdownToken)
 lexMarkdown str
   = case lex markdownTokenMap str of
-         (tokens, _, _, "") => Just $ combineText $ map TokenData.tok tokens
+         (tokens, _, _, "") => Just $ tokens
          _ => Nothing

@@ -6,7 +6,7 @@ description="Semantic Version Parser and Satisfier"
 link="https://github.com/inigo/tree/master/Base/SemVar"
 readme="README.md"
 modules=["SemVar", "SemVar.Sat"]
-depends=["idris2", "contrib"]
+depends=["idris2", "contrib", "Extra", "Fmt"]
 license="MIT"
 
 [deps]
