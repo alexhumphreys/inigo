@@ -23,6 +23,13 @@ import Idrall.APIv1
 import Language.Reflection
 %language ElabReflection
 
+record GitDep where
+  constructor MkGitDep
+  url : String
+  commit : Maybe String
+  subDirs : List String
+%runElab (deriveFromDhall Record `{ GitDep })
+
 data Download'
   = Git String
   | SubDir
@@ -78,14 +85,14 @@ record PackageDhall' where
   readme : Maybe String
   sourcedir : String
   version : String
-  extraDeps : List ExtraDep'
+  localDeps : List String
 %runElab (deriveFromDhall Record `{ PackageDhall' })
 
 shortDepPackage : String
 shortDepPackage = "{ package : { name : Text, ns : Text }, requirement : Text }"
 
 Show PackageDhall' where
-  show (MkPackageDhall' {depends, deps, description, devDeps, executable, license, link, main, modules, ns, package, readme, sourcedir, version, extraDeps}) =
+  show (MkPackageDhall' {depends, deps, description, devDeps, executable, license, link, main, modules, ns, package, readme, sourcedir, version, localDeps}) =
     """
     { depends = \{show depends} : List Text
     , deps = \{show deps} : List \{ shortDepPackage }
@@ -101,8 +108,8 @@ Show PackageDhall' where
     , readme = \{show readme}
     , sourcedir = \{show sourcedir}
     , version = \{show version}
-    , extraDeps =
-      \{show extraDeps}
+    , localDeps =
+      \{show localDeps} : List String
     }
     """
 
@@ -125,6 +132,10 @@ versionFromDhall x =
        Nothing => Left "Error parsing Version"
        (Just v) => pure v
 
+extradepFromLocalDeps : String -> ExtraDep
+extradepFromLocalDeps x =
+  MkExtraDep SubDir () "" ?popo
+
 extradepFromDhall : ExtraDep' -> ExtraDep
 extradepFromDhall (MkExtraDep' (Git x) url subDirs) =
   MkExtraDep Git x url subDirs
@@ -136,11 +147,11 @@ depFromDhall (MkDepPackage ns name requirement) =
   pure ([ns, name], !(requirementFromDhall requirement))
 
 inigoPackageFromDhall : PackageDhall' -> Either String Package
-inigoPackageFromDhall (MkPackageDhall' {depends, deps, description, devDeps, executable, license, link, main, modules, ns, package, readme, sourcedir, version, extraDeps}) =
+inigoPackageFromDhall (MkPackageDhall' {depends, deps, description, devDeps, executable, license, link, main, modules, ns, package, readme, sourcedir, version, localDeps}) =
   let packageVersion = !(versionFromDhall version)
       packageDeps = !(traverse depFromDhall deps)
       packageDevDeps = !(traverse depFromDhall devDeps)
-      packageExtraDeps = map extradepFromDhall extraDeps
+      packageExtraDepsFromLocal = MkExtraDep SubDir () "TODO unused?" localDeps
   in
   pure $ MkPackage
     { ns=ns
@@ -157,7 +168,7 @@ inigoPackageFromDhall (MkPackageDhall' {depends, deps, description, devDeps, exe
     , executable=executable
     , deps=packageDeps
     , devDeps=packageDevDeps
-    , extraDeps=packageExtraDeps
+    , extraDeps=packageExtraDepsFromLocal :: []
     }
 
 export
