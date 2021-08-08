@@ -24,16 +24,16 @@ import Language.Reflection
 %language ElabReflection
 
 data Download'
-  = Git_ String
-  | SubDir_
+  = Git String
+  | SubDir
 %runElab (deriveFromDhall ADT `{ Download' })
 
 downloadDhallType : String
-downloadDhallType = "< SubDir_ | Git_ Text >"
+downloadDhallType = "< SubDir | Git Text >"
 
 Show Download' where
-  show (Git_ x) = "\{downloadDhallType}.Git_ \{show x}"
-  show SubDir_ = "\{downloadDhallType}.SubDir"
+  show (Git x) = "\{downloadDhallType}.Git \{show x}"
+  show SubDir = "\{downloadDhallType}.SubDir"
 
 record ExtraDep' where
   constructor MkExtraDep'
@@ -51,23 +51,15 @@ Show ExtraDep' where
     }
     """
 
-record PackageInfo where
-  constructor MkPackageInfo
-  ns : String
-  name : String
-%runElab (deriveFromDhall Record `{ PackageInfo })
-
-Show PackageInfo where
-  show (MkPackageInfo ns name) = "{ ns = \{show ns}, name = \{show name} }"
-
 record DepPackage where
   constructor MkDepPackage
-  package : PackageInfo
+  ns : String
+  name : String
   requirement : String
 %runElab (deriveFromDhall Record `{ DepPackage })
 
 Show DepPackage where
-  show (MkDepPackage package requirement) = "{ package = \{show package}, requirement = \{show requirement} }"
+  show (MkDepPackage ns name requirement) = "{ ns = \{show ns}, name = \{show name}, requirement = \{show requirement} }"
 
 public export
 record PackageDhall' where
@@ -134,13 +126,13 @@ versionFromDhall x =
        (Just v) => pure v
 
 extradepFromDhall : ExtraDep' -> ExtraDep
-extradepFromDhall (MkExtraDep' (Git_ x) url subDirs) =
+extradepFromDhall (MkExtraDep' (Git x) url subDirs) =
   MkExtraDep Git x url subDirs
-extradepFromDhall (MkExtraDep' SubDir_ url subDirs) =
+extradepFromDhall (MkExtraDep' SubDir url subDirs) =
   MkExtraDep SubDir () url subDirs
 
 depFromDhall : DepPackage -> Either String (List String, Requirement)
-depFromDhall (MkDepPackage (MkPackageInfo ns name) requirement) =
+depFromDhall (MkDepPackage ns name requirement) =
   pure ([ns, name], !(requirementFromDhall requirement))
 
 inigoPackageFromDhall : PackageDhall' -> Either String Package
@@ -173,3 +165,10 @@ parsePackageDhall : String -> Promise $ Either String Package
 parsePackageDhall x = do
   Right package <- liftIO $ parsePackageDhall' x | Left err => pure $ Left err
   pure $ inigoPackageFromDhall package
+
+doitp : String -> IO ()
+doitp x = do
+    Right package <- liftIO $ parsePackageDhall' x
+      | Left err => putStrLn $ show err
+    let p = inigoPackageFromDhall package
+    putStrLn $ show p
