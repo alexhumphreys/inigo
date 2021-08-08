@@ -5,7 +5,7 @@
 , executable = Some "MyPkg"
 , license = Some "stuff"
 , link = Some "www.example.com"
-, main = None Text
+, main = None
 , modules = [] : List Text
 , ns = "Alexhumphreys"
 , package = "MyPkg"
@@ -13,13 +13,10 @@
 , sourcedir = "."
 , version = "9.0.0"
 , localDeps = ["./someDir"] : List Text
-{-
-, extraDeps =
-  [ { download = < SubDir | Git : Text >.Git "abc2345"
-    , url = "git@github.com/mydep/foo"
-    , subDirs = ["."]
+, gitDeps =
+  [ { url = "git@github.com/foo/bar"
+    , commit = "master"
+    , subDirs = ([] : List Text)
     }
-  ]
-  -}
+  ] : List { url : Text, commit : Text, subDirs : List Text }
 }
-

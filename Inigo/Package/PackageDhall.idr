@@ -25,10 +25,14 @@ import Language.Reflection
 
 record GitDep where
   constructor MkGitDep
+  commit : String
   url : String
-  commit : Maybe String
   subDirs : List String
 %runElab (deriveFromDhall Record `{ GitDep })
+
+Show GitDep where
+  show (MkGitDep commit url subDirs) =
+    "MkGitDep \{show commit} \{show url} \{show subDirs}"
 
 data Download'
   = Git String
@@ -41,22 +45,6 @@ downloadDhallType = "< SubDir | Git Text >"
 Show Download' where
   show (Git x) = "\{downloadDhallType}.Git \{show x}"
   show SubDir = "\{downloadDhallType}.SubDir"
-
-record ExtraDep' where
-  constructor MkExtraDep'
-  download : Download'
-  url : String
-  subDirs : List String
-%runElab (deriveFromDhall Record `{ ExtraDep' })
-
-Show ExtraDep' where
-  show (MkExtraDep' {download, url, subDirs}) =
-    """
-    { download = \{show download}
-    , url = \{show url}
-    , subDirs = \{show subDirs}
-    }
-    """
 
 record DepPackage where
   constructor MkDepPackage
@@ -86,13 +74,14 @@ record PackageDhall' where
   sourcedir : String
   version : String
   localDeps : List String
+  gitDeps : List GitDep
 %runElab (deriveFromDhall Record `{ PackageDhall' })
 
 shortDepPackage : String
 shortDepPackage = "{ package : { name : Text, ns : Text }, requirement : Text }"
 
 Show PackageDhall' where
-  show (MkPackageDhall' {depends, deps, description, devDeps, executable, license, link, main, modules, ns, package, readme, sourcedir, version, localDeps}) =
+  show (MkPackageDhall' {depends, deps, description, devDeps, executable, license, link, main, modules, ns, package, readme, sourcedir, version, localDeps, gitDeps}) =
     """
     { depends = \{show depends} : List Text
     , deps = \{show deps} : List \{ shortDepPackage }
@@ -110,6 +99,8 @@ Show PackageDhall' where
     , version = \{show version}
     , localDeps =
       \{show localDeps} : List String
+    , gitDeps =
+      \{show gitDeps} : List String
     }
     """
 
@@ -132,26 +123,21 @@ versionFromDhall x =
        Nothing => Left "Error parsing Version"
        (Just v) => pure v
 
-extradepFromLocalDeps : String -> ExtraDep
-extradepFromLocalDeps x =
-  MkExtraDep SubDir () "" ?popo
-
-extradepFromDhall : ExtraDep' -> ExtraDep
-extradepFromDhall (MkExtraDep' (Git x) url subDirs) =
-  MkExtraDep Git x url subDirs
-extradepFromDhall (MkExtraDep' SubDir url subDirs) =
-  MkExtraDep SubDir () url subDirs
+extraDepFromGit : GitDep -> ExtraDep
+extraDepFromGit (MkGitDep commit url subDirs) =
+  MkExtraDep Git commit url subDirs
 
 depFromDhall : DepPackage -> Either String (List String, Requirement)
 depFromDhall (MkDepPackage ns name requirement) =
   pure ([ns, name], !(requirementFromDhall requirement))
 
 inigoPackageFromDhall : PackageDhall' -> Either String Package
-inigoPackageFromDhall (MkPackageDhall' {depends, deps, description, devDeps, executable, license, link, main, modules, ns, package, readme, sourcedir, version, localDeps}) =
+inigoPackageFromDhall (MkPackageDhall' {depends, deps, description, devDeps, executable, license, link, main, modules, ns, package, readme, sourcedir, version, localDeps, gitDeps}) =
   let packageVersion = !(versionFromDhall version)
       packageDeps = !(traverse depFromDhall deps)
       packageDevDeps = !(traverse depFromDhall devDeps)
       packageExtraDepsFromLocal = MkExtraDep SubDir () "TODO unused?" localDeps
+      packageExtraDepsFromGit = map extraDepFromGit gitDeps
   in
   pure $ MkPackage
     { ns=ns
@@ -168,7 +154,7 @@ inigoPackageFromDhall (MkPackageDhall' {depends, deps, description, devDeps, exe
     , executable=executable
     , deps=packageDeps
     , devDeps=packageDevDeps
-    , extraDeps=packageExtraDepsFromLocal :: []
+    , extraDeps=packageExtraDepsFromLocal :: packageExtraDepsFromGit
     }
 
 export
