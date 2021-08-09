@@ -6,7 +6,7 @@ description="Toml Parser for Idris2"
 link="https://github.com/inigo/tree/master/Base/Toml"
 readme="README.md"
 modules=["Toml"]
-depends=["idris2", "contrib", "Extra"]
+depends=["idris2", "contrib"]
 license="MIT"
 
 [deps]
