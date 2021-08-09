@@ -1,7 +1,7 @@
 package Markdown
 
 modules = Markdown.Format.Html, Markdown.Data, Markdown
-depends = contrib, idris2, Extra
+depends = contrib, idris2
 
 sourcedir = ""
 
