@@ -39,12 +39,13 @@ combineText (el :: rest) =
     accumulate : (List1 $ WithBounds MarkdownToken, WithBounds MarkdownToken) -> WithBounds MarkdownToken -> (List1 $ WithBounds MarkdownToken, WithBounds MarkdownToken)
     accumulate (acc0 ::: acc1, last) el =
       case (last, el) of
-           ( (MkBounded (Tok MdText a) isIrr (MkBounds startLine startCol _ _)),
-             (MkBounded (Tok MdText b) _     (MkBounds _ _ endLine endCol)))
-             => let
-                  combined = (MkBounded (Tok MdText (a ++ b)) isIrr (MkBounds startLine startCol endLine endCol))
-                in (combined ::: acc1, combined)
-           _ => ?bar
+        ( (MkBounded (Tok MdText a) isIrr (MkBounds startLine startCol _ _)),
+          (MkBounded (Tok MdText b) _     (MkBounds _ _ endLine endCol)))
+          => let
+               combined = (MkBounded (Tok MdText (a ++ b)) isIrr (MkBounds startLine startCol endLine endCol))
+             in (combined ::: acc1, combined)
+        _ =>
+          (el ::: acc0 :: acc1, el)
 
 public export
 lexMarkdown : String -> Maybe (List $ WithBounds MarkdownToken)
