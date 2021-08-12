@@ -8,7 +8,7 @@
 , readme = Some "./README.md"
 , license = Some "MPL2"
 , link = Some "www.example.com"
-, main = None Text
+, main = Some "MyPkg"
 , depends = [] : List Text
 , deps = [{ ns = "Base" , name = "IdrTest", requirement = "0.0.1" }]
 , devDeps = [{ ns = "Other" , name = "SomeDebug", requirement = "1.0.1" }]
