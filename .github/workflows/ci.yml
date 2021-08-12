@@ -51,10 +51,9 @@ jobs:
       - name: Checkout idrall repo
         uses: actions/checkout@v2
         with:
-          repository:  alexhumphreys/idrall
-          ref: '65796e0'
+          repository: alexhumphreys/idrall
+          ref: '65796e03d94fe0063de643461096e69341e88ec0'
           path: idrall
-          fetch-depth: 0
       - name: Build/Install Idrall
         if: steps.cache-idris2-with-api.outputs.cache-hit != 'true'
         working-directory: idrall
