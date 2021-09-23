@@ -54,7 +54,7 @@ parseFile (TomlPath path) = do
 parseFile (DhallPath path) = do
   -- can pass the file path to dhall so it can handle relative imports
   Right package <- parsePackageDhall path
-    | Left err => reject ("Error reading dhall package: " ++ err)
+    | Left err => reject ("Error reading dhall package:\n" ++ err)
   pure package
 
 export

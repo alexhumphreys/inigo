@@ -101,7 +101,7 @@ parsePackageDhall' : String -> IO $ Either String PackageDhall
 parsePackageDhall' path = do
   Right package <- liftIOEither $ deriveFromDhallString {ty=PackageDhall} path
     | Left err => do
-        pure $ Left $ show err
+        pure $ Left $ !(fancyError err)
   pure $ Right package
 
 inigoPackageFromDhall : PackageDhall -> Either String Package
